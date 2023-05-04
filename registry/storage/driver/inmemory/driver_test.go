@@ -15,5 +15,5 @@ func init() {
 	inmemoryDriverConstructor := func() (storagedriver.StorageDriver, error) {
 		return New(), nil
 	}
-	testsuites.RegisterSuite(inmemoryDriverConstructor, testsuites.NeverSkip)
+	testsuites.RegisterSuite(inmemoryDriverConstructor)
 }

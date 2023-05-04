@@ -78,7 +78,7 @@ func init() {
 		return ""
 	}
 
-	testsuites.RegisterSuite(azureDriverConstructor, skipCheck)
+	testsuites.RegisterSuite(azureDriverConstructor)
 }
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")

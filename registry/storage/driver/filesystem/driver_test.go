@@ -29,7 +29,7 @@ func init() {
 
 	testsuites.RegisterSuite(func() (storagedriver.StorageDriver, error) {
 		return drvr, nil
-	}, testsuites.NeverSkip)
+	})
 }
 
 func TestFromParametersImpl(t *testing.T) {

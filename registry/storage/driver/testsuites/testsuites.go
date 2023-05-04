@@ -16,29 +16,18 @@ import (
 	"time"
 
 	storagedriver "github.com/distribution/distribution/v3/registry/storage/driver"
+	"github.com/stretchr/testify/suite"
 	"gopkg.in/check.v1"
 )
 
-// Test hooks up gocheck into the "go test" runner.
-func Test(t *testing.T) { check.TestingT(t) }
-
 // RegisterSuite registers an in-process storage driver test suite with
-// the go test runner.
-func RegisterSuite(driverConstructor DriverConstructor, skipCheck SkipCheck) {
+// the DriverSuite.
+func RegisterSuite(driverConstructor DriverConstructor) {
 	check.Suite(&DriverSuite{
 		Constructor: driverConstructor,
-		SkipCheck:   skipCheck,
 		ctx:         context.Background(),
 	})
 }
-
-// SkipCheck is a function used to determine if a test suite should be skipped.
-// If a SkipCheck returns a non-empty skip reason, the suite is skipped with
-// the given reason.
-type SkipCheck func() (reason string)
-
-// NeverSkip is a default SkipCheck which never skips the suite.
-var NeverSkip SkipCheck = func() string { return "" }
 
 // DriverConstructor is a function which returns a new
 // storagedriver.StorageDriver.
@@ -48,42 +37,39 @@ type DriverConstructor func() (storagedriver.StorageDriver, error)
 // storagedriver.StorageDriver.
 type DriverTeardown func() error
 
-// DriverSuite is a gocheck test suite designed to test a
+// DriverSuite is a testify/suite designed to test a
 // storagedriver.StorageDriver. The intended way to create a DriverSuite is
 // with RegisterSuite.
 type DriverSuite struct {
+	suite.Suite
 	Constructor DriverConstructor
 	Teardown    DriverTeardown
-	SkipCheck
 	storagedriver.StorageDriver
 	ctx context.Context
 }
 
 // SetUpSuite sets up the gocheck test suite.
-func (suite *DriverSuite) SetUpSuite(c *check.C) {
-	if reason := suite.SkipCheck(); reason != "" {
-		c.Skip(reason)
-	}
+func (suite *DriverSuite) SetUpSuite() {
 	d, err := suite.Constructor()
-	c.Assert(err, check.IsNil)
+	suite.NoError(err)
 	suite.StorageDriver = d
 }
 
 // TearDownSuite tears down the gocheck test suite.
-func (suite *DriverSuite) TearDownSuite(c *check.C) {
+func (suite *DriverSuite) TearDownSuite() {
 	if suite.Teardown != nil {
 		err := suite.Teardown()
-		c.Assert(err, check.IsNil)
+		suite.NoError(err)
 	}
 }
 
 // TearDownTest tears down the gocheck test.
 // This causes the suite to abort if any files are left around in the storage
 // driver.
-func (suite *DriverSuite) TearDownTest(c *check.C) {
+func (suite *DriverSuite) TearDownTest() {
 	files, _ := suite.StorageDriver.List(suite.ctx, "/")
 	if len(files) > 0 {
-		c.Fatalf("Storage driver did not clean up properly. Offending files: %#v", files)
+		suite.T().Fatalf("Storage driver did not clean up properly. Offending files: %#v", files)
 	}
 }
 
