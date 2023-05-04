@@ -1,10 +1,10 @@
 package configuration
 
 import (
-	"os"
 	"reflect"
+	"testing"
 
-	"gopkg.in/check.v1"
+	"github.com/stretchr/testify/suite"
 )
 
 type localConfiguration struct {
@@ -23,15 +23,18 @@ var expectedConfig = localConfiguration{
 	},
 }
 
-type ParserSuite struct{}
+type ParserSuite struct {
+	suite.Suite
+}
 
-var _ = check.Suite(new(ParserSuite))
+func TestParserSuite(t *testing.T) {
+	suite.Run(t, new(ConfigSuite))
+}
 
-func (suite *ParserSuite) TestParserOverwriteIninitializedPoiner(c *check.C) {
+func (suite *ParserSuite) TestParserOverwriteIninitializedPoiner() {
 	config := localConfiguration{}
 
-	os.Setenv("REGISTRY_LOG_FORMATTER", "json")
-	defer os.Unsetenv("REGISTRY_LOG_FORMATTER")
+	suite.T().Setenv("REGISTRY_LOG_FORMATTER", "json")
 
 	p := NewParser("registry", []VersionedParseInfo{
 		{
@@ -44,15 +47,14 @@ func (suite *ParserSuite) TestParserOverwriteIninitializedPoiner(c *check.C) {
 	})
 
 	err := p.Parse([]byte(`{version: "0.1", log: {formatter: "text"}}`), &config)
-	c.Assert(err, check.IsNil)
-	c.Assert(config, check.DeepEquals, expectedConfig)
+	suite.NoError(err)
+	suite.Equal(expectedConfig, config)
 }
 
-func (suite *ParserSuite) TestParseOverwriteUnininitializedPoiner(c *check.C) {
+func (suite *ParserSuite) TestParseOverwriteUnininitializedPoiner() {
 	config := localConfiguration{}
 
-	os.Setenv("REGISTRY_LOG_FORMATTER", "json")
-	defer os.Unsetenv("REGISTRY_LOG_FORMATTER")
+	suite.T().Setenv("REGISTRY_LOG_FORMATTER", "json")
 
 	p := NewParser("registry", []VersionedParseInfo{
 		{
@@ -65,6 +67,6 @@ func (suite *ParserSuite) TestParseOverwriteUnininitializedPoiner(c *check.C) {
 	})
 
 	err := p.Parse([]byte(`{version: "0.1"}`), &config)
-	c.Assert(err, check.IsNil)
-	c.Assert(config, check.DeepEquals, expectedConfig)
+	suite.NoError(err)
+	suite.Equal(expectedConfig, config)
 }
