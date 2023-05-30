@@ -27,7 +27,7 @@ func init() {
 		panic(err)
 	}
 
-	testsuites.RegisterSuite(func() (storagedriver.StorageDriver, error) {
+	testsuites.RegisterSubTest(func() (storagedriver.StorageDriver, error) {
 		return drvr, nil
 	})
 }

@@ -16,20 +16,23 @@ import (
 
 	storagedriver "github.com/distribution/distribution/v3/registry/storage/driver"
 	"github.com/stretchr/testify/suite"
-	"gopkg.in/check.v1"
 )
 
-// Test hooks up gocheck into the "go test" runner.
-func Test(t *testing.T) { check.TestingT(t) }
+var DriverSubTests = []*DriverSuite{}
 
-// RegisterSuite registers an in-process storage driver test suite with
-// the go test runner.
-func RegisterSuite(driverConstructor DriverConstructor, skipCheck SkipCheck) {
-	check.Suite(&DriverSuite{
+// RegisterSubTest registers an in-process storage driver test suite with
+// the go test runner as a subtest to be ran by TestDriverSuites.
+func RegisterSubTest(driverConstructor DriverConstructor, options []RegisterSubTestOption) {
+	DriverSubTests = append(DriverSubTests, &DriverSuite{
 		Constructor: driverConstructor,
-		SkipCheck:   skipCheck,
 		ctx:         context.Background(),
 	})
+}
+
+func TestDriverSuites(t *testing.T) {
+	for _, st := range DriverSubTests {
+		suite.Run(t, st)
+	}
 }
 
 // DriverConstructor is a function which returns a new
@@ -54,14 +57,14 @@ type DriverSuite struct {
 }
 
 // SetUpSuite sets up the gocheck test suite.
-func (suite *DriverSuite) SetUpSuite() {
+func (suite *DriverSuite) SetupSubTest() {
 	d, err := suite.Constructor()
 	suite.NoError(err)
 	suite.StorageDriver = d
 }
 
 // TearDownSuite tears down the gocheck test suite.
-func (suite *DriverSuite) TearDownSuite() {
+func (suite *DriverSuite) TearDownSubtest() {
 	if suite.Teardown != nil {
 		err := suite.Teardown()
 		suite.NoError(err)

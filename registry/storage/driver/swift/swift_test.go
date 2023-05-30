@@ -95,7 +95,7 @@ func init() {
 		return swiftDriverConstructor(prefix)
 	}
 
-	testsuites.RegisterSuite(driverConstructor)
+	testsuites.RegisterSubTest(driverConstructor)
 }
 
 func TestEmptyRootList(t *testing.T) {

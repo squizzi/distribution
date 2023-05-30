@@ -155,9 +155,9 @@ func init() {
 		return ""
 	}
 
-	testsuites.RegisterSuite(func() (storagedriver.StorageDriver, error) {
+	testsuites.RegisterSubTest(func() (storagedriver.StorageDriver, error) {
 		return s3DriverConstructor(root, s3.StorageClassStandard)
-	}, skipS3)
+	})
 }
 
 func TestEmptyRootList(t *testing.T) {

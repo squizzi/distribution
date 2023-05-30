@@ -71,14 +71,16 @@ func init() {
 	}
 
 	// Skip Azure storage driver tests if environment variable parameters are not provided
-	skipCheck := func() string {
+	skipCheck := func() bool {
 		if len(missing) > 0 {
+			suite.T().Log()
+
 			return fmt.Sprintf("Must set %s environment variables to run Azure tests", strings.Join(missing, ", "))
 		}
 		return ""
 	}
 
-	testsuites.RegisterSuite(azureDriverConstructor)
+	testsuites.RegisterSubTest(azureDriverConstructor)
 }
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
