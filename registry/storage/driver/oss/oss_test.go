@@ -15,25 +15,41 @@ import (
 	"gopkg.in/check.v1"
 )
 
+const (
+	envAccessKey       = "ALIYUN_ACCESS_KEY_ID"
+	envSecretKey       = "ALIYUN_ACCESS_KEY_SECRET"
+	envBucket          = "OSS_BUCKET"
+	envRegion          = "OSS_REGION"
+	envInternal        = "OSS_INTERNAL"
+	envEncrypt         = "OSS_ENCRYPT"
+	envSecure          = "OSS_SECURE"
+	envEndpoint        = "OSS_ENDPOINT"
+	envEncryptionKeyID = "OSS_ENCRYPTIONKEYID"
+)
+
 // Hook up gocheck into the "go test" runner.
-func Test(t *testing.T) { check.TestingT(t) }
 
 var ossDriverConstructor func(rootDirectory string) (*Driver, error)
 
-var skipCheck func() string
-
 func init() {
-	var (
-		accessKey       = os.Getenv("ALIYUN_ACCESS_KEY_ID")
-		secretKey       = os.Getenv("ALIYUN_ACCESS_KEY_SECRET")
-		bucket          = os.Getenv("OSS_BUCKET")
-		region          = os.Getenv("OSS_REGION")
-		internal        = os.Getenv("OSS_INTERNAL")
-		encrypt         = os.Getenv("OSS_ENCRYPT")
-		secure          = os.Getenv("OSS_SECURE")
-		endpoint        = os.Getenv("OSS_ENDPOINT")
-		encryptionKeyID = os.Getenv("OSS_ENCRYPTIONKEYID")
-	)
+	config := []struct {
+		env   string
+		value *string
+	}{
+		{envAccessKey, &accessKey},
+		{envSecretKey, &secretKey},
+		{envBucket, &bucket},
+		{envRegion, &region},
+		{envInternal, &internal},
+		{envEncrypt, &encrypt},
+		{envSecure, &secure},
+		{envEndpoint, &endpoint},
+		{envEncryptionKeyID, &encryptionKeyID},
+	}
+
+	for _, v := range config {
+		*v.value = os.Getenv(v.env)
+	}
 
 	root, err := os.MkdirTemp("", "driver-")
 	if err != nil {
@@ -83,17 +99,7 @@ func init() {
 		return New(parameters)
 	}
 
-	// Skip OSS storage driver tests if environment variable parameters are not provided
-	skipCheck = func() string {
-		if accessKey == "" || secretKey == "" || region == "" || bucket == "" || encrypt == "" {
-			return "Must set ALIYUN_ACCESS_KEY_ID, ALIYUN_ACCESS_KEY_SECRET, OSS_REGION, OSS_BUCKET, and OSS_ENCRYPT to run OSS tests"
-		}
-		return ""
-	}
-
-	testsuites.RegisterSuite(func() (storagedriver.StorageDriver, error) {
-		return ossDriverConstructor(root)
-	}, skipCheck)
+	testsuites.RegisterSubTest(ossDriverConstructor, testsuites.WithSkipCheck(envAccessKey, envSecretKey, envRegion, envBucket, envEncrypt))
 }
 
 func TestEmptyRootList(t *testing.T) {

@@ -2,15 +2,12 @@ package azure
 
 import (
 	"context"
-	"fmt"
 	"math/rand"
 	"os"
-	"strings"
 	"testing"
 
 	storagedriver "github.com/distribution/distribution/v3/registry/storage/driver"
 	"github.com/distribution/distribution/v3/registry/storage/driver/testsuites"
-	"gopkg.in/check.v1"
 )
 
 const (
@@ -23,9 +20,6 @@ const (
 
 var azureDriverConstructor func() (storagedriver.StorageDriver, error)
 
-// Hook up gocheck into the "go test" runner.
-func Test(t *testing.T) { check.TestingT(t) }
-
 func init() {
 	var (
 		accountName   string
@@ -36,23 +30,18 @@ func init() {
 	)
 
 	config := []struct {
-		env       string
-		value     *string
-		missingOk bool
+		env   string
+		value *string
 	}{
-		{envAccountName, &accountName, true},
-		{envAccountKey, &accountKey, true},
-		{envContainer, &container, true},
-		{envRealm, &realm, true},
-		{envRootDirectory, &rootDirectory, true},
+		{envAccountName, &accountName},
+		{envAccountKey, &accountKey},
+		{envContainer, &container},
+		{envRealm, &realm},
+		{envRootDirectory, &rootDirectory},
 	}
 
-	missing := []string{}
 	for _, v := range config {
 		*v.value = os.Getenv(v.env)
-		if *v.value == "" && !v.missingOk {
-			missing = append(missing, v.env)
-		}
 	}
 
 	azureDriverConstructor = func() (storagedriver.StorageDriver, error) {
@@ -70,17 +59,9 @@ func init() {
 		return New(params)
 	}
 
-	// Skip Azure storage driver tests if environment variable parameters are not provided
-	skipCheck := func() bool {
-		if len(missing) > 0 {
-			suite.T().Log()
+	skipCheck := testsuites.SkipCheck(envAccountName, envAccountKey, envContainer, envRealm, envRootDirectory)
 
-			return fmt.Sprintf("Must set %s environment variables to run Azure tests", strings.Join(missing, ", "))
-		}
-		return ""
-	}
-
-	testsuites.RegisterSubTest(azureDriverConstructor)
+	testsuites.RegisterSubTest(azureDriverConstructor, skipCheck)
 }
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")

@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"fmt"
 	"io"
 	"math/rand"
 	"net/http"
 	"os"
 	"path"
 	"sort"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -20,13 +22,29 @@ import (
 
 var DriverSubTests = []*DriverSuite{}
 
+// SkipCheck accepts a list of environment variables and returns a string
+// explaining why the test is being skipped if any of the environment variables
+// are not set.  Use this to skip tests that require specific driver config.
+func SkipCheck(env ...string) string {
+	for _, e := range env {
+		if os.Getenv(e) == "" {
+			return fmt.Sprintf("Skipping subtest: %s environment vars must all be set\n", strings.Join(env, ", "))
+
+		}
+	}
+
+	return ""
+}
+
 // RegisterSubTest registers an in-process storage driver test suite with
 // the go test runner as a subtest to be ran by TestDriverSuites.
-func RegisterSubTest(driverConstructor DriverConstructor, options []RegisterSubTestOption) {
-	DriverSubTests = append(DriverSubTests, &DriverSuite{
-		Constructor: driverConstructor,
-		ctx:         context.Background(),
-	})
+func RegisterSubTest(driverConstructor DriverConstructor, skipCheck ...string) {
+	if len(skipCheck) == 0 {
+		DriverSubTests = append(DriverSubTests, &DriverSuite{
+			Constructor: driverConstructor,
+			ctx:         context.Background(),
+		})
+	}
 }
 
 func TestDriverSuites(t *testing.T) {

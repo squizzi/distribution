@@ -16,32 +16,16 @@ import (
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
-	"gopkg.in/check.v1"
 )
-
-// Hook up gocheck into the "go test" runner.
-func Test(t *testing.T) { check.TestingT(t) }
 
 var (
 	gcsDriverConstructor func(rootDirectory string) (storagedriver.StorageDriver, error)
-	skipGCS              func() string
+	skipGCS              string
 )
 
 func init() {
 	bucket := os.Getenv("REGISTRY_STORAGE_GCS_BUCKET")
 	credentials := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
-
-	// Skip GCS storage driver tests if environment variable parameters are not provided
-	skipGCS = func() string {
-		if bucket == "" || credentials == "" {
-			return "The following environment variables must be set to enable these tests: REGISTRY_STORAGE_GCS_BUCKET, GOOGLE_APPLICATION_CREDENTIALS"
-		}
-		return ""
-	}
-
-	if skipGCS() != "" {
-		return
-	}
 
 	jsonKey, err := os.ReadFile(credentials)
 	if err != nil {
@@ -96,15 +80,17 @@ func init() {
 		return New(parameters)
 	}
 
-	testsuites.RegisterSuite(func() (storagedriver.StorageDriver, error) {
+	skipGCS = testsuites.SkipCheck("REGISTRY_STORAGE_GCS_BUCKET", "GOOGLE_APPLICATION_CREDENTIALS")
+
+	testsuites.RegisterSubTest(func() (storagedriver.StorageDriver, error) {
 		return gcsDriverConstructor(root)
 	}, skipGCS)
 }
 
 // Test Committing a FileWriter without having called Write
 func TestCommitEmpty(t *testing.T) {
-	if skipGCS() != "" {
-		t.Skip(skipGCS())
+	if skipGCS != "" {
+		t.Skip(skipGCS)
 	}
 
 	validRoot := t.TempDir()
@@ -145,8 +131,8 @@ func TestCommitEmpty(t *testing.T) {
 // Test Committing a FileWriter after having written exactly
 // defaultChunksize bytes.
 func TestCommit(t *testing.T) {
-	if skipGCS() != "" {
-		t.Skip(skipGCS())
+	if skipGCS != "" {
+		t.Skip(skipGCS)
 	}
 
 	validRoot := t.TempDir()
@@ -190,8 +176,8 @@ func TestCommit(t *testing.T) {
 }
 
 func TestRetry(t *testing.T) {
-	if skipGCS() != "" {
-		t.Skip(skipGCS())
+	if skipGCS != "" {
+		t.Skip(skipGCS)
 	}
 
 	assertError := func(expected string, observed error) {
@@ -227,8 +213,8 @@ func TestRetry(t *testing.T) {
 }
 
 func TestEmptyRootList(t *testing.T) {
-	if skipGCS() != "" {
-		t.Skip(skipGCS())
+	if skipGCS != "" {
+		t.Skip(skipGCS)
 	}
 
 	validRoot := t.TempDir()
@@ -284,8 +270,8 @@ func TestEmptyRootList(t *testing.T) {
 
 // TestMoveDirectory checks that moving a directory returns an error.
 func TestMoveDirectory(t *testing.T) {
-	if skipGCS() != "" {
-		t.Skip(skipGCS())
+	if skipGCS != "" {
+		t.Skip(skipGCS)
 	}
 
 	validRoot := t.TempDir()

@@ -28,7 +28,7 @@ func Test(t *testing.T) { check.TestingT(t) }
 
 var (
 	s3DriverConstructor func(rootDirectory, storageClass string) (*Driver, error)
-	skipS3              func() string
+	skipS3              string
 )
 
 func init() {
@@ -148,21 +148,16 @@ func init() {
 	}
 
 	// Skip S3 storage driver tests if environment variable parameters are not provided
-	skipS3 = func() string {
-		if accessKey == "" || secretKey == "" || region == "" || bucket == "" || encrypt == "" {
-			return "Must set AWS_ACCESS_KEY, AWS_SECRET_KEY, AWS_REGION, S3_BUCKET, and S3_ENCRYPT to run S3 tests"
-		}
-		return ""
-	}
+	skipS3 = testsuites.SkipCheck(accessKey, secretKey, region, bucket, encrypt)
 
 	testsuites.RegisterSubTest(func() (storagedriver.StorageDriver, error) {
 		return s3DriverConstructor(root, s3.StorageClassStandard)
-	})
+	}, skipS3)
 }
 
 func TestEmptyRootList(t *testing.T) {
-	if skipS3() != "" {
-		t.Skip(skipS3())
+	if skipS3 != "" {
+		t.Skip(skipS3)
 	}
 
 	validRoot := t.TempDir()
@@ -208,8 +203,8 @@ func TestEmptyRootList(t *testing.T) {
 // TestWalkEmptySubDirectory assures we list an empty sub directory only once when walking
 // through its parent directory.
 func TestWalkEmptySubDirectory(t *testing.T) {
-	if skipS3() != "" {
-		t.Skip(skipS3())
+	if skipS3 != "" {
+		t.Skip(skipS3)
 	}
 
 	drv, err := s3DriverConstructor("", s3.StorageClassStandard)
@@ -239,8 +234,8 @@ func TestWalkEmptySubDirectory(t *testing.T) {
 }
 
 func TestStorageClass(t *testing.T) {
-	if skipS3() != "" {
-		t.Skip(skipS3())
+	if skipS3 != "" {
+		t.Skip(skipS3)
 	}
 
 	rootDir := t.TempDir()
@@ -292,8 +287,8 @@ func TestStorageClass(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	if skipS3() != "" {
-		t.Skip(skipS3())
+	if skipS3 != "" {
+		t.Skip(skipS3)
 	}
 
 	rootDir := t.TempDir()
@@ -511,8 +506,8 @@ func TestDelete(t *testing.T) {
 }
 
 func TestWalk(t *testing.T) {
-	if skipS3() != "" {
-		t.Skip(skipS3())
+	if skipS3 != "" {
+		t.Skip(skipS3)
 	}
 
 	rootDir := t.TempDir()
@@ -666,8 +661,8 @@ func TestWalk(t *testing.T) {
 }
 
 func TestOverThousandBlobs(t *testing.T) {
-	if skipS3() != "" {
-		t.Skip(skipS3())
+	if skipS3 != "" {
+		t.Skip(skipS3)
 	}
 
 	rootDir := t.TempDir()
@@ -694,8 +689,8 @@ func TestOverThousandBlobs(t *testing.T) {
 }
 
 func TestMoveWithMultipartCopy(t *testing.T) {
-	if skipS3() != "" {
-		t.Skip(skipS3())
+	if skipS3 != "" {
+		t.Skip(skipS3)
 	}
 
 	rootDir := t.TempDir()
@@ -743,8 +738,8 @@ func TestMoveWithMultipartCopy(t *testing.T) {
 }
 
 func TestListObjectsV2(t *testing.T) {
-	if skipS3() != "" {
-		t.Skip(skipS3())
+	if skipS3 != "" {
+		t.Skip(skipS3)
 	}
 
 	rootDir := t.TempDir()
